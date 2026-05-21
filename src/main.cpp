@@ -26,7 +26,7 @@
 #include "util/log_helper.h"
 #include "valeronoi.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Check for --headless before creating QApplication.
   // Forces offscreen QPA platform so no display is required.
   bool headless_mode = false;
@@ -103,8 +103,6 @@ int main(int argc, char **argv) {
   QCommandLineOption returnHomeOpt(
       "return-home",
       "Send stop + home commands when duration elapsed or Ctrl+C is pressed");
-  QCommandLineOption quietOpt("quiet",
-                              "Only print error and critical messages");
 
   parser.addOption(headlessOpt);
   parser.addOption(outputOpt);
@@ -117,7 +115,6 @@ int main(int argc, char **argv) {
   parser.addOption(commandOpt);
   parser.addOption(modeOpt);
   parser.addOption(returnHomeOpt);
-  parser.addOption(quietOpt);
 
   parser.process(app);
 
@@ -171,14 +168,6 @@ int main(int argc, char **argv) {
     }
     if (!parser.positionalArguments().isEmpty()) {
       recorder.load_file(parser.positionalArguments().value(0));
-    }
-    if (parser.isSet(quietOpt)) {
-      qInstallMessageHandler(
-          [](QtMsgType type, const QMessageLogContext &, const QString &msg) {
-            if (type == QtCriticalMsg || type == QtFatalMsg) {
-              fprintf(stderr, "%s\n", qPrintable(msg));
-            }
-          });
     }
 
     return recorder.run();
