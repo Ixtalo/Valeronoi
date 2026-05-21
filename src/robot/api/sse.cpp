@@ -53,6 +53,8 @@ void SSEConnection::slot_connect() {
 
     auto reply = m_qnam.get(request);
     connect(reply, &QNetworkReply::readyRead, this, [=]() {
+      // Prevent readAll() on an already-aborted reply (queued signal race)
+      if (!reply->isOpen()) return;
       qDebug() << "Received initial map data";
       auto buffer = reply->readAll();
       m_initial_current_data.append(buffer);
@@ -81,7 +83,8 @@ void SSEConnection::slot_connect() {
 }
 
 void SSEConnection::slot_ready_read() {
-  if (!m_reply) {
+  // Guard against readAll() after abort() — queued signals may still arrive
+  if (!m_reply || !m_reply->isOpen()) {
     // Should not happen
     return;
   }
@@ -129,6 +132,8 @@ void SSEConnection::slot_disconnect() {
   m_watchdog_timer.stop();
   if (m_reply) {
     m_reply->abort();
+    // defer deletion, pending signals may still reference this object
+    m_reply->deleteLater();
     m_reply = nullptr;
   }
 }
